@@ -1,0 +1,56 @@
+body { background: #f8fafc; }
+.main-grid {
+    display: flex;
+    flex-direction: row;
+    gap: 2vw;
+    min-height: 80vh;
+}
+.cron-panel {
+    flex: 2 1 0;
+}
+.logs-panel {
+    flex: 1 1 350px;
+    background: #222;
+    color: #eee;
+    border-radius: 12px;
+    padding: 18px 16px;
+    min-width: 320px;
+    max-width: 500px;
+    overflow-y: auto;
+    font-size: 0.97em;
+    box-shadow: 0 1px 6px #0002;
+    margin-top: 0.5em;
+    height: 70vh;
+}
+.container {
+    width: 100vw;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+    border-radius: 0;
+    box-shadow: none;
+}
+.cron-table {
+    width: 100%;
+    font-size: 1.08em;
+}
+.cron-table input, .cron-table td, .cron-table th { font-family: monospace; font-size: 1em; }
+.logo { width: 60px; }
+.add-btn { min-width: 40px; }
+.filter-input { max-width: 200px; }
+.logs-title {
+    font-size: 1.1em;
+    font-weight: bold;
+    margin-bottom: 0.7em;
+    color: #fff;
+    letter-spacing: 0.5px;
+}
+.logs-panel pre {
+    background: transparent;
+    color: inherit;
+    padding: 0;
+    border: none;
+    font-size: inherit;
+    margin: 0;
+    white-space: pre-wrap;
+}

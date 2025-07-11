@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestor de Crontab</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+    <style>
+        html, body { height: 100%; width: 100%; margin: 0; padding: 0; }
+        body { min-height: 100vh; min-width: 100vw; }
+        .container { width: 100vw; min-height: 100vh; margin: 0; padding: 0; border-radius: 0; box-shadow: none; max-width: 100vw !important; }
+        .center-table { display: flex; justify-content: center; }
+        .cron-table { margin: 0; width: 100% !important; }
+        .table-responsive { width: 100vw !important; margin: 0; padding: 0; }
+        @media (min-width: 1200px) {
+            .container { padding-left: 32px; padding-right: 32px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container bg-white">
+        <div class="d-flex align-items-center mb-4 p-4 pb-0">
+            <img src="{{ url_for('static', filename='cron_logo.png') }}" class="logo me-3" alt="Logo">
+            <h2 class="mb-0">Gestor de Crontab</h2>
+        </div>
+        <div class="p-4 pt-2">
+            <div id="alert-area"></div>
+            <div class="mb-3 d-flex justify-content-between align-items-center">
+                <input type="text" class="form-control filter-input" id="filterInput" placeholder="Filtrar por comando o campo...">
+                <button type="button" class="btn btn-success add-btn ms-2" onclick="openModal()">+ Nueva tarea</button>
+            </div>
+            <div class="center-table">
+                <div class="table-responsive" style="width:100%;">
+                    <table class="table table-bordered align-middle cron-table" id="cronTable" style="width:100%;">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Minuto</th>
+                                <th>Hora</th>
+                                <th>Día Mes</th>
+                                <th>Mes</th>
+                                <th>Día Semana</th>
+                                <th>Comando</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cronTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="mt-4 text-muted small">
+                <p>Para agregar o editar tareas, usa la tabla y el formulario.<br>
+                <a href="https://crontab.guru/" target="_blank">Ayuda con sintaxis</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Cron -->
+    <div class="modal fade" id="cronModal" tabindex="-1" aria-labelledby="cronModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <form class="modal-content" id="modalForm" autocomplete="off">
+          <div class="modal-header">
+            <h5 class="modal-title" id="cronModalLabel">Editar tarea de cron</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-2">
+                <label class="form-label">Minuto</label>
+                <input type="text" class="form-control" id="modalMin" value="*">
+            </div>
+            <div class="mb-2">
+                <label class="form-label">Hora</label>
+                <input type="text" class="form-control" id="modalHour" value="*">
+            </div>
+            <div class="mb-2">
+                <label class="form-label">Día Mes</label>
+                <input type="text" class="form-control" id="modalDom" value="*">
+            </div>
+            <div class="mb-2">
+                <label class="form-label">Mes</label>
+                <input type="text" class="form-control" id="modalMonth" value="*">
+            </div>
+            <div class="mb-2">
+                <label class="form-label">Día Semana</label>
+                <input type="text" class="form-control" id="modalDow" value="*">
+            </div>
+            <div class="mb-2">
+                <label class="form-label">Comando</label>
+                <textarea class="form-control" id="modalCmd" required rows="4" style="resize:vertical"></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-danger me-auto" id="modalDeleteBtn" style="display:none">Eliminar</button>
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-primary">Guardar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal Logs -->
+    <div class="modal fade" id="logsModal" tabindex="-1" aria-labelledby="logsModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header bg-dark text-white">
+            <h5 class="modal-title" id="logsModalLabel">Logs de Cron</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body" style="background:#222; color:#eee; max-height:70vh; overflow-y:auto;">
+            <pre id="logsModalContent">Cargando logs...</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+        window.INIT_CRONTAB = `{{ crontab_content | replace('\r\n', '\n') | replace('\r', '\n') | safe }}`;
+        function openLogsModal() {
+            const modal = new bootstrap.Modal(document.getElementById('logsModal'));
+            document.getElementById('logsModalContent').textContent = "Cargando logs...";
+            fetch("/api/logs").then(r => r.json()).then(data => {
+                if (data.logs) {
+                    document.getElementById('logsModalContent').textContent = data.logs.join('\n');
+                } else {
+                    document.getElementById('logsModalContent').textContent = "No se pudieron cargar los logs.";
+                }
+            }).catch(() => {
+                document.getElementById('logsModalContent').textContent = "No se pudieron cargar los logs.";
+            });
+            modal.show();
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+    <script>
+    // Agregar botón "Ver logs" en cada fila
+    const origRenderTable = window.renderTable;
+    window.renderTable = function() {
+        const tbody = document.getElementById('cronTableBody');
+        const filter = document.getElementById('filterInput').value.toLowerCase();
+        tbody.innerHTML = "";
+        rows.forEach((row, idx) => {
+            const rowStr = row.join(" ").toLowerCase();
+            if (filter && !rowStr.includes(filter)) return;
+            const tr = document.createElement('tr');
+            for (let i = 0; i < 6; i++) {
+                const td = document.createElement('td');
+                td.textContent = row[i];
+                tr.appendChild(td);
+            }
+            const tdBtn = document.createElement('td');
+            const btnEdit = document.createElement('button');
+            btnEdit.type = "button";
+            btnEdit.className = "btn btn-outline-primary btn-sm me-2";
+            btnEdit.innerText = "Editar";
+            btnEdit.onclick = () => openModal(idx);
+            tdBtn.appendChild(btnEdit);
+
+            const btnDup = document.createElement('button');
+            btnDup.type = "button";
+            btnDup.className = "btn btn-outline-secondary btn-sm me-2";
+            btnDup.innerText = "Duplicar";
+            btnDup.onclick = () => { rows.splice(idx + 1, 0, [...rows[idx]]); renderTable(); };
+            tdBtn.appendChild(btnDup);
+
+            const btnLogs = document.createElement('button');
+            btnLogs.type = "button";
+            btnLogs.className = "btn btn-dark btn-sm";
+            btnLogs.innerText = "Ver logs";
+            btnLogs.onclick = openLogsModal;
+            tdBtn.appendChild(btnLogs);
+
+            tr.appendChild(tdBtn);
+            tbody.appendChild(tr);
+        });
+    };
+    </script>
+</body>
+</html>
