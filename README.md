@@ -71,5 +71,5 @@ deactivate
 
 ---
 
-**Autor:** Tu nombre aquí
+**Autor:** Jhon Efrain Suarez de Media Clouding SAS
 **Licencia:** MIT
