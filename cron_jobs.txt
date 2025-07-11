@@ -1,0 +1,5 @@
+*/20 * * * *|python3 /home/difusor02/Nextcloud/99_Multimedia/RTMP/Linea_Stream/linea_backup/01_caracol_backup.py|caracol_bk.log
+*/20 * * * *|python3 /home/difusor02/Nextcloud/99_Multimedia/RTMP/Linea_Stream/linea_backup/02_rcn_backup.py|rcn_bk.log
+*/20 * * * *|python3 /home/difusor02/Nextcloud/99_Multimedia/RTMP/Linea_Stream/linea_backup/03_city_backup.py|03_city_backup.log
+*/20 * * * *|python3 /home/difusor02/Nextcloud/99_Multimedia/RTMP/Linea_Stream/linea_backup/04_Uno_backup.py|04_Uno_backup.log
+*/20 * * * *|python3 /home/difusor02/Nextcloud/99_Multimedia/RTMP/Linea_Stream/linea_backup/05_Redmasbk.py|05_Redmasbk.log
