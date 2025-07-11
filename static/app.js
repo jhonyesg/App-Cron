@@ -21,13 +21,48 @@ function parseCrontab(content) {
     });
 }
 
+function loadTaskLog(logPath) {
+    fetch(`/api/task-log?log_path=${encodeURIComponent(logPath)}`)
+        .then(res => {
+            if (!res.ok) {
+                throw new Error("No se pudo cargar el log específico.");
+            }
+            return res.text();
+        })
+        .then(logContent => {
+            const logsPanel = document.getElementById('logsPanel');
+            logsPanel.innerHTML = `<div class="logs-title">Log de la tarea</div><pre>${escapeHtml(logContent)}</pre>`;
+        })
+        .catch(err => {
+            const logsPanel = document.getElementById('logsPanel');
+            logsPanel.innerHTML = `<div class="logs-title">Log de la tarea</div><pre>${escapeHtml(err.message)}</pre>`;
+        });
+}
+
+async function executeTaskManually(command) {
+    try {
+        const res = await fetch("/api/execute-task", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ command })
+        });
+        const data = await res.json();
+        if (res.ok) {
+            showAlert(data.message, "success");
+        } else {
+            showAlert(data.message || "Error al ejecutar la tarea.", "danger");
+        }
+    } catch (error) {
+        showAlert("Error al ejecutar la tarea.", "danger");
+    }
+}
+
 function renderTable() {
     const tbody = document.getElementById('cronTableBody');
     const filter = document.getElementById('filterInput').value.toLowerCase();
     tbody.innerHTML = "";
     rows.forEach((row, idx) => {
-        const rowStr = row.join(" ").toLowerCase();
-        if (filter && !rowStr.includes(filter)) return;
+        console.log(`Fila ${idx}:`, row);
         const tr = document.createElement('tr');
         for (let i = 0; i < 6; i++) {
             const td = document.createElement('td');
@@ -35,20 +70,12 @@ function renderTable() {
             tr.appendChild(td);
         }
         const tdBtn = document.createElement('td');
-        const btnEdit = document.createElement('button');
-        btnEdit.type = "button";
-        btnEdit.className = "btn btn-outline-primary btn-sm me-2";
-        btnEdit.innerText = "Editar";
-        btnEdit.onclick = () => openModal(idx);
-        tdBtn.appendChild(btnEdit);
-
-        const btnDup = document.createElement('button');
-        btnDup.type = "button";
-        btnDup.className = "btn btn-outline-secondary btn-sm me-2";
-        btnDup.innerText = "Duplicar";
-        btnDup.onclick = () => { rows.splice(idx + 1, 0, [...rows[idx]]); renderTable(); };
-        tdBtn.appendChild(btnDup);
-
+        const btnExecute = document.createElement('button');
+        btnExecute.type = "button";
+        btnExecute.className = "btn btn-outline-success btn-sm";
+        btnExecute.innerText = "Ejecutar";
+        btnExecute.onclick = () => executeTaskManually(row[5]);
+        tdBtn.appendChild(btnExecute);
         tr.appendChild(tdBtn);
         tbody.appendChild(tr);
     });
@@ -210,3 +237,5 @@ function escapeHtml(text) {
         })[m];
     });
 }
+
+console.log(rows);

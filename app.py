@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_file
 import subprocess
 import os
 
@@ -52,8 +52,6 @@ def logs():
     logs = get_cron_logs()
     return render_template("logs.html", logs=logs)
 
-from flask import jsonify
-
 @app.route("/api/crontab", methods=["POST"])
 def api_crontab():
     data = request.get_json()
@@ -69,6 +67,31 @@ def api_crontab():
 def api_logs():
     logs = get_cron_logs()
     return jsonify({"logs": logs})
+
+@app.route("/api/task-log", methods=["GET"])
+def api_task_log():
+    log_path = request.args.get("log_path")
+    if not log_path or not os.path.exists(log_path):
+        return jsonify({"success": False, "message": "Archivo de log no encontrado."}), 404
+    try:
+        return send_file(log_path, mimetype="text/plain")
+    except Exception as e:
+        return jsonify({"success": False, "message": "Error al leer el archivo de log."}), 500
+
+@app.route("/api/execute-task", methods=["POST"])
+def api_execute_task():
+    data = request.get_json()
+    command = data.get("command")
+    if not command:
+        return jsonify({"success": False, "message": "Comando no proporcionado."}), 400
+    try:
+        result = subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        if result.returncode == 0:
+            return jsonify({"success": True, "message": "Tarea ejecutada correctamente."})
+        else:
+            return jsonify({"success": False, "message": f"Error al ejecutar la tarea: {result.stderr}"}), 500
+    except Exception as e:
+        return jsonify({"success": False, "message": "Error interno al ejecutar la tarea."}), 500
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0")

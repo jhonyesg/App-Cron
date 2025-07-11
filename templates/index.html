@@ -163,14 +163,29 @@
             btnDup.onclick = () => { rows.splice(idx + 1, 0, [...rows[idx]]); renderTable(); };
             tdBtn.appendChild(btnDup);
 
-            const btnLogs = document.createElement('button');
-            btnLogs.type = "button";
-            btnLogs.className = "btn btn-dark btn-sm";
-            btnLogs.innerText = "Ver logs";
-            btnLogs.onclick = openLogsModal;
-            tdBtn.appendChild(btnLogs);
+    const btnLogs = document.createElement('button');
+    btnLogs.type = "button";
+    btnLogs.className = "btn btn-dark btn-sm me-2";
+    btnLogs.innerText = "Ver logs";
+    btnLogs.onclick = () => {
+        // Extraer path del log del comando (busca >> /path/to/log)
+        const logMatch = row[5].match(/>>\s*([^\s]+)/);
+        if (logMatch && logMatch[1]) {
+            loadTaskLog(logMatch[1]);
+        } else {
+            openLogsModal();
+        }
+    };
+    tdBtn.appendChild(btnLogs);
 
-            tr.appendChild(tdBtn);
+    const btnExecute = document.createElement('button');
+    btnExecute.type = "button";
+    btnExecute.className = "btn btn-outline-success btn-sm";
+    btnExecute.innerText = "Ejecutar";
+    btnExecute.onclick = () => executeTaskManually(row[5]);
+    tdBtn.appendChild(btnExecute);
+
+    tr.appendChild(tdBtn);
             tbody.appendChild(tr);
         });
     };
